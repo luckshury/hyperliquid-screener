@@ -18,8 +18,7 @@ import {
 } from 'lucide-react';
 import { decode } from '@msgpack/msgpack';
 import { decompress } from 'fzstd';
-
-const API_ROUTE = '/api/perp-snapshot';
+import { encoreClient } from '@/lib/encore-client';
 
 interface Position {
   address: string;
@@ -72,19 +71,9 @@ const PerpSnapshotTerminal: React.FC = () => {
   // Check for updates (metadata endpoint - fast)
   const checkForUpdates = async (): Promise<boolean> => {
     try {
-      const response = await fetch(API_ROUTE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ type: 'perpSnapshotTimestamp' })
+      const data = await encoreClient.perpSnapshot.post({ 
+        type: 'perpSnapshotTimestamp' 
       });
-
-      if (!response.ok) {
-        throw new Error(`Timestamp request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
       const currentTimestamp = data.timestamp || data.snapshot_id;
 
       const hasUpdates = cachedTimestamp !== currentTimestamp;
@@ -241,25 +230,13 @@ const PerpSnapshotTerminal: React.FC = () => {
   // Download snapshots (heavy endpoint)
   const downloadSnapshots = async (marketNames: string[]): Promise<SnapshotData> => {
     try {
-      const response = await fetch(API_ROUTE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: 'perpSnapshots',
-          market_names: marketNames
-        })
+      const response = await encoreClient.perpSnapshot.post({
+        type: 'perpSnapshots',
+        market_names: marketNames
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Route Error:', response.status, errorData);
-        throw new Error(`Perp snapshots request failed: ${response.status} - ${JSON.stringify(errorData)}`);
-      }
-
-      const payloadFormat = response.headers.get('x-payload-format');
-      const binaryData = await response.arrayBuffer();
+      const payloadFormat = response.headers?.payloadFormat;
+      const binaryData = response.data;
 
       console.log(`📦 Payload format: ${payloadFormat}`);
       console.log(`📦 Downloaded ${(binaryData.byteLength / 1024 / 1024).toFixed(2)} MB`);

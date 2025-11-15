@@ -153,7 +153,7 @@ async function getChartData(symbols: string[], range: RangeKey): Promise<Record<
 }
 
 // Encore API endpoint
-export const chartCache = api(
+export const getChartCache = api(
   { method: "POST", path: "/chart-cache" },
   async (req: ChartCacheRequest): Promise<ChartCacheResponse> => {
     const { symbols, range = '1D' } = req;

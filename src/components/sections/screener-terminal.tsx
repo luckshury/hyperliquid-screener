@@ -4,6 +4,7 @@ import { useState, useMemo, memo, useEffect, useRef, useCallback, useId } from "
 import { useWebSocket } from "@/contexts/websocket-context";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { encoreClient } from "@/lib/encore-client";
 import {
   AreaChart,
   Area,
@@ -551,19 +552,8 @@ const ScreenerTerminal = () => {
       if (!symbols.length) return {};
 
       try {
-        const response = await fetch('/api/chart-cache', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ symbols, range }),
-        });
-
-        if (!response.ok) {
-          console.warn(`chart-cache request failed: ${response.status}`);
-          return {};
-        }
-
-        const payload = await response.json();
-        return payload?.data ?? {};
+        const response = await encoreClient.chartCache.get({ symbols, range });
+        return response?.data ?? {};
       } catch (error) {
         console.error('chart-cache fetch failed:', error);
         return {};

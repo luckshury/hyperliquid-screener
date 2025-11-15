@@ -13,9 +13,9 @@ import {
   Eye,
   Zap
 } from 'lucide-react';
+import { encoreClient } from '@/lib/encore-client';
 
 const API_KEY = process.env.NEXT_PUBLIC_HYDROMANCER_API_KEY || '';
-const API_ROUTE = '/api/analytics';
 const WS_URL = `wss://api.hydromancer.xyz/ws`;
 
 interface SmartMoneyAccount {
@@ -149,18 +149,10 @@ const AnalyticsTerminal: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await fetch(API_ROUTE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: 'batchClearinghouseStates',
-          users: smartMoneyAddresses
-        })
+      const data = await encoreClient.analytics.post({
+        type: 'batchClearinghouseStates',
+        users: smartMoneyAddresses
       });
-
-      const data = await response.json();
       
       const accounts: SmartMoneyAccount[] = smartMoneyAddresses.map((address, index) => {
         const state = data[index];
@@ -198,20 +190,10 @@ const AnalyticsTerminal: React.FC = () => {
   const fetchPerpSnapshot = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(API_ROUTE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: 'perpSnapshots',
-          market_names: ['BTC', 'ETH', 'SOL', 'HYPE', 'FARTCOIN', 'TRUMP']
-        })
+      const data = await encoreClient.analytics.post({
+        type: 'perpSnapshots',
+        market_names: ['BTC', 'ETH', 'SOL', 'HYPE', 'FARTCOIN', 'TRUMP']
       });
-
-      // Note: This endpoint returns binary data (zstd compressed msgpack)
-      // For now, we'll handle the JSON fallback
-      const data = await response.json().catch(() => null);
       
       if (data) {
         // Process snapshot data
