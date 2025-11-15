@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,9 +8,13 @@ import {
   Activity,
   BarChart3,
   ChevronLeft,
+  Database,
   DollarSign,
+  Layers,
+  List,
   Menu,
   Moon,
+  Network,
   Newspaper,
   Settings,
   Sun,
@@ -37,18 +41,23 @@ const SidebarNavigation = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const navItems = [
+  // Memoize nav items to prevent recreation on every render
+  const navItems = useMemo(() => [
     { href: "/screener", icon: Activity, label: "Screener" },
+    { href: "/fills", icon: List, label: "Fills" },
+    { href: "/network", icon: Network, label: "Network" },
+    { href: "/analytics", icon: Database, label: "Analytics" },
+    { href: "/snapshot", icon: Layers, label: "Perp Snapshot" },
     { href: "/", icon: BarChart3, label: "Markets" },
     { href: "#", icon: TrendingUp, label: "Pivot Analysis" },
     { href: "#", icon: DollarSign, label: "Currencies" },
-    { href: "#", icon: Newspaper, label: "Analytics" },
-  ];
+    { href: "#", icon: Newspaper, label: "News" },
+  ], []);
 
-  const isNavItemActive = (href: string) => {
+  const isNavItemActive = useCallback((href: string) => {
     if (href === "/") return pathname === "/";
     return pathname?.startsWith(href);
-  };
+  }, [pathname]);
 
   return (
     <>

@@ -1,34 +1,47 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { Search, Bell, User, TrendingUp, FileText, DollarSign, BarChart3, Activity } from 'lucide-react';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { useWebSocket } from '@/contexts/websocket-context';
 
-const tickerData = [
-  { symbol: 'BTC', price: '$95733.70', change: -1.18 },
-  { symbol: 'ETH', price: '$3147.20', change: -0.68 },
-  { symbol: 'SOL', price: '$140.76', change: -0.47 },
-  { symbol: 'BNB', price: '$930.90', change: 2.17 },
-  { symbol: 'XRP', price: '$2.25', change: -1.32 },
-  { symbol: 'ADA', price: '$0.5012', change: -2.85 },
-  { symbol: 'DOGE', price: '$0.1610', change: -1.00 },
-  { symbol: 'AVAX', price: '$15.36', change: -1.16 },
-];
+const formatPrice = (price: number): string => {
+  if (price < 1) {
+    return `$${price.toFixed(4)}`;
+  }
+  return `$${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
-const TickerItem = ({ item }: { item: (typeof tickerData)[0] }) => (
+const TickerItem = memo(({ symbol, price, change }: { symbol: string; price: number; change: number }) => (
   <div className="flex items-center gap-2 text-xs">
-    <span className="font-bold text-foreground">{item.symbol}</span>
-    <span className="text-muted-foreground">{item.price}</span>
-    <span className={`transition-colors duration-200 ${item.change >= 0 ? 'text-terminal-green' : 'text-terminal-red'}`}>
-      {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
+    <span className="font-bold text-foreground">{symbol}</span>
+    <span className="text-muted-foreground">{formatPrice(price)}</span>
+    <span className={`transition-colors duration-200 ${change >= 0 ? 'text-terminal-green' : 'text-terminal-red'}`}>
+      {change >= 0 ? '+' : ''}{change.toFixed(2)}%
     </span>
   </div>
-);
+));
+
+TickerItem.displayName = 'TickerItem';
 
 const HeaderBar = () => {
+    const { assets } = useWebSocket();
     const [nyTime, setNyTime] = useState<string>('');
     const [lonTime, setLonTime] = useState<string>('');
     const [searchOpen, setSearchOpen] = useState(false);
+
+    // Get top 20 assets by volume/activity for ticker tape
+    const tickerAssets = useMemo(() => {
+        const majorAssets = ['BTC', 'ETH', 'SOL', 'HYPE', 'BNB', 'XRP', 'DOGE', 'AVAX', 'LINK', 'MATIC'];
+        const filtered = assets.filter(a => majorAssets.includes(a.symbol));
+        
+        // If we don't have enough major assets yet, take top movers
+        if (filtered.length < 10) {
+            return assets.slice(0, 20);
+        }
+        
+        return filtered.slice(0, 20);
+    }, [assets]);
 
     useEffect(() => {
         const updateClocks = () => {
@@ -110,9 +123,18 @@ const HeaderBar = () => {
                 <div className="h-10 overflow-hidden bg-secondary/50">
                     <div className="flex items-center h-full">
                         <div className="flex gap-8 whitespace-nowrap px-4 animate-[ticker-tape_60s_linear_infinite]">
-                            {[...tickerData, ...tickerData].map((item, index) => (
-                               <TickerItem key={`${item.symbol}-${index}`} item={item} />
-                            ))}
+                            {tickerAssets.length > 0 ? (
+                                [...tickerAssets, ...tickerAssets, ...tickerAssets].map((asset, index) => (
+                                    <TickerItem 
+                                        key={`${asset.symbol}-${index}`} 
+                                        symbol={asset.symbol}
+                                        price={asset.price}
+                                        change={asset.change24h}
+                                    />
+                                ))
+                            ) : (
+                                <div className="text-xs text-muted-foreground">Loading market data...</div>
+                            )}
                         </div>
                     </div>
                 </div>
