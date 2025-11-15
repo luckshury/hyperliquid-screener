@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_KEY = 'sk_nNhuLkdGdW5sxnYec33C2FBPzLjXBnEd';
-const API_BASE = 'https://api.hydromancer.xyz';
+const API_KEY = process.env.NEXT_PUBLIC_HYDROMANCER_API_KEY || '';
+const API_BASE = process.env.NEXT_PUBLIC_HYDROMANCER_URL || 'https://api.hydromancer.xyz';
 
 export async function POST(request: NextRequest) {
   try {

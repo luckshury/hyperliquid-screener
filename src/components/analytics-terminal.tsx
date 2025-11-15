@@ -14,7 +14,7 @@ import {
   Zap
 } from 'lucide-react';
 
-const API_KEY = 'sk_nNhuLkdGdW5sxnYec33C2FBPzLjXBnEd';
+const API_KEY = process.env.NEXT_PUBLIC_HYDROMANCER_API_KEY || '';
 const API_ROUTE = '/api/analytics';
 const WS_URL = `wss://api.hydromancer.xyz/ws`;
 
